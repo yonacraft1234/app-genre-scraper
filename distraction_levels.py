@@ -72,14 +72,14 @@ GENRE_GROUPS = {
 
 
 CATEGORY_DISTRACTION_VALUES = {
-    "Games": 10,
-    "Social": 8,
-    "Media": 7,
-    "Education": 6,
-    "Productivity": 5,
-    "Lifestyle": 4,
-    "Utility": 3,
-    "Health": 2,
+    "Games": 3,
+    "Media": 3,
+    "Social": 2,
+    "Education": 1,
+    "Lifestyle": 1,
+    "Utility": 1,
+    "Health": 1,
+    "Productivity": 0
 }
 
 def get_category(genre: str) -> str:
