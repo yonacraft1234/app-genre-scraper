@@ -4,9 +4,12 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from google_play_scraper import search
 from rapidfuzz import fuzz
 
-from distraction_levels import get_category, get_category_distraction
+from distraction_levels import get_category, get_category_distraction, CATEGORY_DISTRACTION_VALUES
 from types_lib.constants import *
 from types_lib.scraper_types import ScraperInputType, ScraperResponse
+
+UNKNOWN_CATEGORY = "Utility"
+UNKNOWN_DISTRACTION = CATEGORY_DISTRACTION_VALUES[UNKNOWN_CATEGORY]
 
 def is_valid_match(input_name: str, found_name: str, threshold: int = 60) -> bool:
     """
@@ -26,12 +29,11 @@ def fetch_app(app_name: str) -> ScraperResponse:
         search_results = search(app_name, n_hits=5)
 
         if not search_results:
-            unknown_result = ScraperResponse(
+            return ScraperResponse(
                 app=app_name,
-                status=UNKNOWN,
-                reason=NO_RESULTS,
+                category=UNKNOWN_CATEGORY,
+                distraction_value=UNKNOWN_DISTRACTION,
             )
-            return unknown_result
 
         best_match = None #best match for an app from the 5 search finds
 
@@ -42,35 +44,28 @@ def fetch_app(app_name: str) -> ScraperResponse:
                 break
 
         if not best_match:
-            unknown_result =  ScraperResponse(
+            return ScraperResponse(
                 app=app_name,
-                status=UNKNOWN,
-                reason=LOW_SIMILARITY,
+                category=UNKNOWN_CATEGORY,
+                distraction_value=UNKNOWN_DISTRACTION,
             )
-            return unknown_result
 
         genre = best_match.get(GENRE)
         category = get_category(genre)
-
         distraction_value = get_category_distraction(genre)
-        genre_id = best_match.get(GENRE_ID)
-        good_result = ScraperResponse(
-            app=app_name,
-            status=OK,
-            genre=genre,
-            genre_id=genre_id,
-            category=category,
-            distraction_value=distraction_value
-        )
-        return good_result
 
-    except Exception as e:
-        bad_result =  ScraperResponse(
+        if category == UNKNOWN:
+            category = UNKNOWN_CATEGORY
+            distraction_value = UNKNOWN_DISTRACTION
+
+        return ScraperResponse(
             app=app_name,
-            status=ERROR,
-            error=str(e)
+            category=category,
+            distraction_value=distraction_value,
         )
-        return bad_result
+
+    except Exception:
+        return ScraperResponse(app=app_name)
 
 
 def get_app_genres(app_names: ScraperInputType) -> List[ScraperResponse]:
